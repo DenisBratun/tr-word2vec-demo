@@ -8,7 +8,7 @@ st.write("Model entrenat amb un corpus en català (CATalog, Projecte AINA) — T
 
 @st.cache_resource
 def load_vectors():
-    return KeyedVectors.load("word2vec_catalan_v2.model.wv.vectors.npy", mmap='r')
+    return Word2Vec.load("word2vec_catalan_v2.model").wv
 
 wv = load_vectors()
 
