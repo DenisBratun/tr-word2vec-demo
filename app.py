@@ -1,5 +1,5 @@
 import streamlit as st
-from gensim.models import KeyedVectors
+from gensim.models import Word2Vec
 
 st.set_page_config(page_title="Explorador Word2Vec Català", page_icon="🔤")
 
