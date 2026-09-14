@@ -1,5 +1,5 @@
 import streamlit as st
-from gensim.models import Word2Vec
+from gensim.models import KeyedVectors
 
 st.set_page_config(page_title="Explorador Word2Vec Català", page_icon="🔤")
 
@@ -7,12 +7,12 @@ st.title("🔤 Explorador de Word2Vec en Català")
 st.write("Model entrenat amb un corpus en català (CATalog, Projecte AINA) — Treball de Recerca de Denís Bratun")
 
 @st.cache_resource
-def load_model():
-    return Word2Vec.load("word2vec_catalan_v2.model")
+def load_vectors():
+    return KeyedVectors.load("word2vec_catalan_v2.model.wv.vectors.npy", mmap='r')
 
-model = load_model()
+wv = load_vectors()
 
-st.caption(f"Vocabulari: {len(model.wv.key_to_index):,} paraules úniques")
+st.caption(f"Vocabulari: {len(wv.key_to_index):,} paraules úniques")
 
 tab1, tab2, tab3, tab4 = st.tabs([
     "Paraules similars",
@@ -28,8 +28,9 @@ with tab1:
     topn = st.slider("Nombre de resultats", 3, 20, 5)
 
     if word:
+        word = word.lower().strip()
         try:
-            results = model.wv.most_similar(word, topn=topn)
+            results = wv.most_similar(word, topn=topn)
             for w, score in results:
                 st.write(f"**{w}** — similitud: {score:.4f}")
         except KeyError:
@@ -45,9 +46,11 @@ with tab2:
         w2 = st.text_input("Segona paraula:", "reina", key="tab2_w2")
 
     if st.button("Calcular similitud"):
+        w1_clean = w1.lower().strip()
+        w2_clean = w2.lower().strip()
         try:
-            sim = model.wv.similarity(w1, w2)
-            st.metric(label=f"Similitud entre '{w1}' i '{w2}'", value=f"{sim:.4f}")
+            sim = wv.similarity(w1_clean, w2_clean)
+            st.metric(label=f"Similitud entre '{w1_clean}' i '{w2_clean}'", value=f"{sim:.4f}")
             if sim > 0.6:
                 st.success("Similitud alta — paraules molt properes semànticament.")
             elif sim > 0.3:
@@ -70,24 +73,28 @@ with tab3:
         pos2 = st.text_input("Paraula positiva 2", "dona", key="tab3_pos2")
 
     if st.button("Calcular analogia"):
+        p1 = pos1.lower().strip()
+        n1 = neg1.lower().strip()
+        p2 = pos2.lower().strip()
         try:
-            result = model.wv.most_similar(positive=[pos1, pos2], negative=[neg1], topn=5)
-            st.write(f"**{pos1} − {neg1} + {pos2} =**")
+            result = wv.most_similar(positive=[p1, p2], negative=[n1], topn=5)
+            st.write(f"**{p1} − {n1} + {p2} =**")
             for w, score in result:
                 st.write(f"  {w}: {score:.4f}")
         except KeyError as e:
             st.error(f"Alguna paraula no està al vocabulari: {e}")
 
-# --- TAB 4: Informació d'una paraula (frecuencia, vector) ---
+# --- TAB 4: Informació d'una paraula ---
 with tab4:
     st.header("Informació d'una paraula")
     w = st.text_input("Escriu una paraula:", "rei", key="tab4_word")
 
     if w:
-        if w in model.wv.key_to_index:
-            freq = model.wv.get_vecattr(w, "count")
-            vector = model.wv[w]
-            st.write(f"**Freqüència al corpus:** {freq:,} aparicions")
+        w_clean = w.lower().strip()
+        if w_clean in wv.key_to_index:
+            idx = wv.key_to_index[w_clean]
+            vector = wv[w_clean]
+            st.write(f"**Posició al vocabulari:** #{idx + 1}")
             st.write(f"**Dimensions del vector:** {len(vector)}")
             with st.expander("Veure els primers 10 valors del vector"):
                 st.write(vector[:10])
