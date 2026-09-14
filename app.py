@@ -1,18 +1,19 @@
 import streamlit as st
-from gensim.models import Word2Vec
+from gensim.models import KeyedVectors
+
+@st.cache_resource
+def load_vectors():
+    return KeyedVectors.load_word2vec_format("vectores_catalan.bin", binary=True)
+
+wv = load_vectors()
+st.caption(f"Vocabulari: {len(wv.key_to_index):,} paraules úniques")
+
 
 st.set_page_config(page_title="Explorador Word2Vec Català", page_icon="🔤")
 
 st.title("🔤 Explorador de Word2Vec en Català")
 st.write("Model entrenat amb un corpus en català (CATalog, Projecte AINA) — Treball de Recerca de Denís Bratun")
 
-@st.cache_resource
-def load_vectors():
-    return Word2Vec.load("word2vec_catalan_v2.model").wv
-
-wv = load_vectors()
-
-st.caption(f"Vocabulari: {len(wv.key_to_index):,} paraules úniques")
 
 tab1, tab2, tab3, tab4 = st.tabs([
     "Paraules similars",
